@@ -2545,4 +2545,123 @@ document.addEventListener('click',function(e){
   card.style.borderColor=ok?'rgba(123,227,168,.6)':'rgba(255,156,176,.55)';
 },true);
 })();</script>
-</body></html>
+<script>/*WXD*/
+(function(){
+  'use strict';
+  var IMGS = { clinic:'__IMG_CLINIC__', treat:'__IMG_TREAT__', hero:'__IMG_HERO__' };
+  var HOS = [
+    { id:'h1', n:'서울 온유피부과', d:'피부 · 보톡스 · 필러 · 레이저', p:'강남 · 역삼역 3번 출구', cn:'首尔 温和皮肤科' },
+    { id:'h2', n:'한빛 성형외과', d:'성형 · 눈 · 코 · 지방이식', p:'강남 · 신논현역 5번 출구', cn:'汉光 整形外科' },
+    { id:'h3', n:'서울 미소치과', d:'치과 · 임플란트 · 라미네이트', p:'서초 · 교대역 1번 출구', cn:'首尔 微笑齿科' }
+  ];
+  var SV = [
+    { n:'레이저 · 피부결', p:'₩ 120,000 부터', t:'회복 1~2일' },
+    { n:'보툴리눔톡신', p:'₩ 90,000 부터', t:'회복 0일' },
+    { n:'필러 · 윤곽', p:'₩ 250,000 부터', t:'회복 1~3일' },
+    { n:'피부 상담 · 분석', p:'₩ 30,000', t:'검사 20분' }
+  ];
+  var GUIDE = {
+    home:['홈','환자가 처음 보는 화면입니다. 병원 · 진료과 · AI 상담으로 바로 들어갑니다.',['홈','숏컷','병원 목록']],
+    hospitals:['병원 선택','지역과 진료과로 병원을 고릅니다. 카드를 누르면 시술 목록으로 넘어갑니다.',['홈','병원 선택','항목']],
+    service:['진료 항목','항목과 예상 금액은 예시입니다. 실제 금액은 상담 뒤 결정된다는 문구가 고정으로 붙습니다.',['병원 선택','항목','예약 확인']],
+    booking:['예약 확인','환자 이름 · 연락처 · 희망 날짜를 확인합니다. 통역 필요 여부도 여기서 체크합니다.',['항목','예약 확인','완료']],
+    done:['예약 완료','예약 번호가 생성되고, 환자에게 같은 화면이 위챗으로 전달됩니다.',['예약 확인','완료']],
+    ai:['AI 예약 · 결제 Q&A','질문을 누르면 답변이 쌓입니다. 금액 · 효과 · 보장 관련 질문에는 정해진 문장으로만 답합니다.',['AI','질문','답변']],
+    my:['마이','예약 내역과 문의 기록을 확인합니다. 아카데미 기능은 넣지 않았습니다.',['마이','예약 내역']]
+  };
+  var AIQ = [
+    { q:'비용은 얼마인가요?', a:'금액은 병원 공식 안내만 전달합니다. "환자 상태에 따라 달라질 수 있으며, 자세한 비용은 의료진 상담 이후 결정됩니다."' },
+    { q:'효과가 보장되나요?', a:'"사람마다 다르고, 의료진이 진찰한 뒤 설명합니다." 보장 · 성공률 표현은 사용하지 않습니다.' },
+    { q:'예약을 바꿀 수 있나요?', a:'가능합니다. 병원 규정에 따라 일정 변경을 안내하며, 변경은 예약 확인 화면에서 진행합니다. (예시 데이터)' },
+    { q:'통역도 되나요?', a:'네. 상담 · 진료 · 수납 전 과정에 통역이 함께합니다. 통역 필요 여부는 예약 시 체크합니다.' }
+  ];
+  var S = { scr:'home', hos:0, sv:0, msgs:[] };
+
+  function el(id){ return document.getElementById(id); }
+  function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]; }); }
+
+  function wx_render(){
+    var app = el('wxd_app');
+    var h = '';
+    if(S.scr === 'home'){
+      h += '<div class="c-banner"><img src="' + IMGS.hero + '" alt=""><div class="bt">병원 예약부터<br>통역까지 한 번에</div></div>';
+      h += '<div class="c-quick"><div data-go="medical"><b>✚</b>병원 예약</div><div data-go="ai"><b>✦</b>AI 상담</div><div data-go="my"><b>☺</b>내 예약</div></div>';
+      h += '<div class="c-sec">추천 병원</div>';
+      for(var i=0;i<HOS.length;i++){ h += '<div class="c-hos" data-hos="' + i + '"><img src="' + IMGS.clinic + '" alt=""><div class="hx"><div class="hn">' + esc(HOS[i].n) + '</div><div class="hd">' + esc(HOS[i].d) + '</div><div class="hp">' + esc(HOS[i].p) + '</div></div></div>'; }
+    } else if(S.scr === 'hospitals'){
+      h += '<div class="c-title">병원 선택</div><div class="c-desc">진료과와 지역으로 찾습니다. (예시 데이터)</div>';
+      for(var j=0;j<HOS.length;j++){ h += '<div class="c-hos" data-hos="' + j + '"><img src="' + IMGS.clinic + '" alt=""><div class="hx"><div class="hn">' + esc(HOS[j].n) + '</div><div class="hd">' + esc(HOS[j].d) + '</div><div class="hp">' + esc(HOS[j].p) + '</div></div></div>'; }
+    } else if(S.scr === 'service'){
+      h += '<div class="c-title">' + esc(HOS[S.hos].n) + '</div><div class="c-desc">' + esc(HOS[S.hos].d) + '</div>';
+      h += '<div class="c-hos" style="padding:0;border:none"><img src="' + IMGS.treat + '" style="width:100%;height:104px;border-radius:12px" alt=""></div>';
+      for(var k=0;k<SV.length;k++){ h += '<div class="c-row" data-sv="' + k + '"><span>' + esc(SV[k].n) + ' · ' + esc(SV[k].t) + '</span><span>' + esc(SV[k].p) + '</span></div>'; }
+      h += '<div class="c-desc" style="margin-top:2px">※ 예시 금액입니다. 실제 비용은 의료진 상담 이후 결정됩니다.</div>';
+    } else if(S.scr === 'booking'){
+      h += '<div class="c-title">예약 확인</div>';
+      h += '<div class="c-row"><span>병원</span><span>' + esc(HOS[S.hos].n) + '</span></div>';
+      h += '<div class="c-row"><span>항목</span><span>' + esc(SV[S.sv].n) + '</span></div>';
+      h += '<div class="c-row"><span>예상 금액</span><span>' + esc(SV[S.sv].p) + '</span></div>';
+      h += '<div class="c-row"><span>통역</span><span>중국어 가능</span></div>';
+      h += '<div class="c-desc">금액은 환자 상태에 따라 달라질 수 있으며, 자세한 비용은 의료진 상담 이후 결정됩니다.</div>';
+      h += '<button class="c-btn" data-go="done">예약 확정</button>';
+    } else if(S.scr === 'done'){
+      h += '<div class="c-done"><div class="ok">✓</div><div class="c-title">예약이 접수되었습니다</div><div class="c-desc">예약번호 <b>HN-2611-0412</b> (예시)<br>병원 확인 후 위챗으로 안내드립니다.</div><button class="c-btn gh" data-go="home" style="width:100%">홈으로</button></div>';
+    } else if(S.scr === 'ai'){
+      h += '<div class="c-scroll">';
+      if(!S.msgs.length){ h += '<div class="c-bubble a">무엇이든 물어보세요. 금액 · 효과 · 예약 관련 질문에 정해진 문장으로 답합니다.</div>'; }
+      for(var m=0;m<S.msgs.length;m++){ h += '<div class="c-bubble q">' + esc(S.msgs[m].q) + '</div><div class="c-bubble a">' + esc(S.msgs[m].a) + '</div>'; }
+      h += '</div><div class="c-ask">';
+      for(var q=0;q<AIQ.length;q++){ h += '<div data-ai="' + q + '">' + esc(AIQ[q].q) + '</div>'; }
+      h += '</div>';
+    } else if(S.scr === 'my'){
+      h += '<div class="c-title">마이</div>';
+      h += '<div class="c-row"><span>내 예약</span><span>1건</span></div>';
+      h += '<div class="c-row"><span>문의 기록</span><span>' + S.msgs.length + '건</span></div>';
+      h += '<div class="c-row"><span>언어</span><span>中文</span></div>';
+      h += '<div class="c-desc" style="margin-top:8px">아카데미 · 강좌 기능은 이 데모에서 제외했습니다.</div>';
+    }
+    app.innerHTML = h;
+    wx_guide();
+    var tabs = el('wxd_nav').children;
+    for(var t=0;t<tabs.length;t++){
+      tabs[t].classList.toggle('on', tabs[t].dataset.tab === S.scr || (S.scr==='hospitals'||S.scr==='service'||S.scr==='booking'||S.scr==='done' ? tabs[t].dataset.tab==='medical' : false));
+    }
+  }
+
+  function wx_guide(){
+    var g = GUIDE[S.scr] || GUIDE.home;
+    el('wxd_gtitle').textContent = g[0];
+    el('wxd_gbody').textContent = g[1];
+    var st = el('wxd_steps'), out = '';
+    for(var i=0;i<g[2].length;i++){ out += '<span class="' + (i === g[2].length - 1 ? 'on' : '') + '">' + esc(g[2][i]) + '</span>'; }
+    st.innerHTML = out;
+  }
+
+  function wx_go(scr){ S.scr = scr; wx_render(); }
+
+  document.addEventListener('click', function(e){
+    var root = document.querySelector('[data-l="wxupdemo"]');
+    if(!root || !root.contains(e.target)) return;
+    e.stopPropagation();
+    var t = e.target;
+    var tab = t.closest('[data-tab]');
+    if(tab){ wx_go(tab.dataset.tab); return; }
+    var go = t.closest('[data-go]');
+    if(go){ wx_go(go.dataset.go); return; }
+    var h = t.closest('[data-hos]');
+    if(h){ S.hos = +h.dataset.hos; wx_go('service'); return; }
+    var s = t.closest('[data-sv]');
+    if(s){ S.sv = +s.dataset.sv; wx_go('booking'); return; }
+    var a = t.closest('[data-ai]');
+    if(a){ var it = AIQ[+a.dataset.ai]; S.msgs.push({ q: it.q, a: it.a }); wx_render(); return; }
+  }, true);
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' '){ e.stopPropagation(); }
+  }, true);
+
+  function boot(){ if(el('wxd_app')) wx_render(); }
+  if(document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.wx_go = wx_go; window.wx_render = wx_render;
+})();
+</script></body></html>
