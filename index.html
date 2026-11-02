@@ -2406,27 +2406,8 @@ function buildSteps(sl){
   return out;
 }
 
-function reset(sl){
-  var st=buildSteps(sl);
-  stepIdx[sl.id]=0;
-  st.forEach(function(e){ e.classList.add('stp'); e.classList.remove('stp-on'); });
-  st.forEach(function(e){ var t=e.querySelectorAll('*'); });
-  if(st[0]){ void sl.offsetWidth; st[0].classList.add('stp-on'); stepIdx[sl.id]=1; }
-  sl._steps=st;
-}
-
-function next(sl){
-  var st=sl._steps||[];
-  var one=!!ONE[sl.dataset.l];
-  var i=stepIdx[sl.id]||0;
-  if(one && i<st.length){
-    for(var k=i;k<st.length;k++){ var e=st[k]; e.style.transitionDelay=((k-i)*90)+'ms'; e.classList.add('stp-on'); }
-    stepIdx[sl.id]=st.length;
-    return true;
-  }
-  if(i<st.length){ st[i].classList.add('stp-on'); stepIdx[sl.id]=i+1; return true; }
-  return false;
-}
+function reset(sl){ stepIdx[sl.id]=0; sl._steps=[]; }
+function next(sl){ return false; }
 
 /* ---- 카드 뒤집기 (진료과 한눈에) ---- */
 function flipCard(c){
@@ -2591,13 +2572,7 @@ function onEnter(i){
 function tick(){ var i=act(); if(i!==cur){ cur=i; onEnter(i);} }
 
 /* 키 : → 단계 먼저 */
-document.addEventListener('keydown',function(e){
-  if(e.key!=='ArrowRight'&&e.key!=='PageDown'&&e.key!==' ') return;
-  var sl=document.querySelector('div.slide.on'); if(!sl) return;
-  if(sl._qz&&sl._qz.classList.contains('on')){ return; }
-  var r=next(sl);
-  if(r){ e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); }
-},true);
+
 
 document.addEventListener('click',function(e){
   if(e.target.closest('.qzbtn,.qzset,.ckpop,.wxd-root')) return;
@@ -2783,14 +2758,7 @@ const DP={back:'M15 5l-7 7 7 7',home:'M3 10l9-7 9 7v10H3z M9 20v-7h6v7',hospital
   dRender();
 
 }catch(e){console.warn("[wxdemo]",e&&e.message||e);}</script>
-<script>/*UNIFIED2*/window.__adv=function(){
-  var s=document.querySelector('div.slide.on'); if(!s) return false;
-  if(s.querySelector('.qzset.on')) return true;
-  try{ if(window.__v10&&window.__v10.next&&window.__v10.next(s)) return true; }catch(e){}
-  return false;
-};
-window.__bck=function(){ return false; };
-</script>
+
 <script>/*NAVCTL*/(function(){
   var BLOCK={' ':'space','Spacebar':'space','Enter':'enter','PageDown':'pd','PageUp':'pu','ArrowDown':'ad','ArrowUp':'au','m':'m','M':'m'};
   window.addEventListener('keydown',function(e){
@@ -2810,9 +2778,7 @@ window.__bck=function(){ return false; };
       var q=s.querySelector('.qzset'); if(q){ q.classList.remove('on'); }
       return;
     }
-    var done=false;
-    try{ done = (window.__v10 && window.__v10.next) ? window.__v10.next(s) : false; }catch(_){}
-    if(!done){ try{ if(typeof advance==='function') advance(); }catch(_){} }
+    try{ if(typeof advance==='function'){ advance(); } }catch(_){}
   }
   function wire(){
     killChips();
